@@ -10,6 +10,9 @@ function Tile(props) {
         else if(props.color === "blue"){
             text = "Circle";
         }
+        else if(props.color === "magenta"){
+            text="Hexagon";
+        }
         else{
             text = "Square";
         }

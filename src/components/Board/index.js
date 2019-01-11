@@ -11,7 +11,7 @@ const containerStyle = {
 };
 
 // Current colors used in the game
-const colors = ["red", "green", "blue"];
+const colors = ["red", "green", "blue", "magenta"];
 
 export default class GameBoard extends Component {
     state = {
@@ -22,7 +22,8 @@ export default class GameBoard extends Component {
             ['', '', '', ''],
             ['', '', '', '']
         ],
-        firstClick: {}
+        firstClick: {}, 
+        score: 0
     }
 
     // The first time the board is mounted, generate a random board
@@ -43,6 +44,7 @@ export default class GameBoard extends Component {
                 // Also store the x and y coordinates of the tile within the 2D array
                 tile.xIndex = xIndex;
                 tile.yIndex = yIndex;
+                tile.key = "" + xIndex + yIndex;
                 // Push new tile in newRow array
                 return newRow.push(tile);
             });
@@ -51,7 +53,7 @@ export default class GameBoard extends Component {
         });
         // Set tile state with the newTileState array, and set gameStarted to true
         // Then, in call back check if there are any matches on the board
-        this.setState({tile: newTileState, gameStarted: true}, () => {
+        this.setState({tile: newTileState}, () => {
             this.checkMatchesOnBoard();
         });
     }
@@ -71,7 +73,7 @@ export default class GameBoard extends Component {
                 // Deconstruct the tile object into variables
                 const {color, xIndex, yIndex} = tile;
                 // Then pass the variables as props into the Tile component
-                return <Tile color={color} xIndex={xIndex} yIndex={yIndex} click={this.handleClicks}/>
+                return <Tile color={color} xIndex={xIndex} yIndex={yIndex} key={`${xIndex}${yIndex}`} click={this.handleClicks}/>
             }));
         }));
     }
@@ -116,55 +118,65 @@ export default class GameBoard extends Component {
     // Checks game board for matches of 3 or more 
     checkMatchesOnBoard = () => {
         const tiles = this.state.tile;
+        let tilesToDelete = [];
         tiles.forEach((row, i) => {
             row.forEach((tile, j) => {
                 // Since currently the board is only 4x4, only need to check the first two elements in the row for matches
                 if(j < tiles[i].length-2){
                     // If three in a row are matching, store tile coordinates in an array of objects
                     if(tile.color === tiles[i][j+1].color && tiles[i][j].color === tiles[i][j+2].color){
-                        const one = {x: i, y: j};
-                        const two = {x: i, y: j+1};
-                        const three = {x: i, y: j+2};
-                        const tilesToDelete = [one, two, three];
+                        tilesToDelete.push(tile.key, tiles[i][j+1].key, tiles[i][j+2].key);
                         // If there is a fourth matching tile in the row, add it to the delete array
                         if(tiles[i][j+3] !== undefined && tiles[i][j].color === tiles[i][j+3].color){
-                            const four = {x: i, y: j+3};
-                            tilesToDelete.push(four);
+                            tilesToDelete.push(tiles[i][j+3].key);
                         }
-                        // Delete the matching tiles
-                        this.deleteTiles(tilesToDelete);
                     }
                 }
                 // Since currently board is only 4x4, only need to check the first two elements in column for matches
                 if(i < tiles.length-2){
                     // If three in a column are matching, store tile coordinates in an array of objects
                     if(tile.color === tiles[i+1][j].color && tiles[i][j].color === tiles[i+2][j].color){
-                        const one = {x: i, y: j};
-                        const two = {x: i+1, y: j};
-                        const three = {x: i+2, y: j};
-                        const tilesToDelete = [one, two, three];
+                        if(_.includes(tilesToDelete, tile.key)){
+                            tilesToDelete.push(tiles[i+1][j].key, tiles[i+2][j].key);
+                        }
+                        else{
+                            tilesToDelete.push(tile.key, tiles[i+1][j].key, tiles[i+2][j].key);
+                        }
                         // If there is a fourth matching tile in the column, add it to the delete array
                         if(tiles[i+3] !== undefined && tiles[i][j].color === tiles[i+3][j].color){
-                            const four = {x: i+3, y: j};
-                            tilesToDelete.push(four);
+                            tilesToDelete.push(tiles[i+3][j].key);
                         }
-                        // Delete the matching tiles
-                        this.deleteTiles(tilesToDelete);
                     }
                 }
             })
         });
+        // If there are tiles to delete, run deleteTiles function
+        // This is run before the game start to make sure that the first board presented to the player does not have any matches!!
+        if(tilesToDelete.length > 0){
+            console.log(tilesToDelete);
+            this.deleteTiles(tilesToDelete);
+        }
+        // If there are no tiles that match, then game is started and board will become visible to player
+        else if(tilesToDelete.length === 0){
+            this.setState({gameStarted: true});
+        }
     }
 
     // Function to delete tiles that takes in an array of tile objects
     deleteTiles = (tilesToDelete) => {
-        console.log("deleted tiles");
+        let score = this.state.score;
+        console.log(score);
         const tiles = this.state.tile;
         tilesToDelete.forEach(tile => {
-            tiles[tile.x][tile.y].color = "";
+            tiles[tile[0]][tile[1]].color = "";
+            console.log("deleted one tile");
+            // Only increase the score if the game has started
+            if(this.state.gameStarted){
+                score++;
+            }
         });
-        // Set tile state to new tiles array 
-        this.setState({tile: tiles}, () => {
+        // Set tile state to new tiles array and shift tiles down
+        this.setState({tile: tiles, score: score}, () => {
             this.shiftTilesDown();
         });
     }
@@ -180,6 +192,9 @@ export default class GameBoard extends Component {
                 if(xIndex < tiles.length-1 && tile.color === ""){
                     // If the next tile over also doesn't have a color, then switch tile with next next tile in the column
                     if(xIndex < tiles.length-2 && tiles[xIndex+1][yIndex].color === ""){
+                        if(xIndex < tiles.length-3 && tiles[xIndex+2][yIndex].color === ""){
+                            return [tiles[xIndex][yIndex].color, tiles[xIndex+3][yIndex].color] = [tiles[xIndex+3][yIndex].color, tiles[xIndex][yIndex].color];
+                        }
                         return [tiles[xIndex][yIndex].color, tiles[xIndex+2][yIndex].color] = [tiles[xIndex+2][yIndex].color, tiles[xIndex][yIndex].color];
                     }
                     [tiles[xIndex][yIndex].color, tiles[xIndex+1][yIndex].color] = [tiles[xIndex+1][yIndex].color, tiles[xIndex][yIndex].color];
@@ -189,7 +204,14 @@ export default class GameBoard extends Component {
         // Reverse the array again to get back to origin array order
         tiles.reverse();
         // Fill in any remaining empty tiles with new random tiles
-        this.fillInEmptyTiles(tiles);
+        this.state.gameStarted ? 
+        setTimeout(
+            function(){
+                this.fillInEmptyTiles(tiles)
+            }
+            .bind(this),
+            1000)
+        : this.fillInEmptyTiles(tiles)
     }
 
     // Function to fill in any remaining empty spaces after existing tiles have already been shifted down
@@ -197,19 +219,33 @@ export default class GameBoard extends Component {
         tiles.forEach(row => {
             row.forEach(tile => {
                 if(tile.color === ""){
-                    tile.color = "purple";
-                    //tile.color = this.randomColor();
+                    tile.color = this.randomColor();
+                }
+                else{
+                    return;
                 }
             });
         });
         this.setState({tile: tiles}, () => {
-            // this.checkMatchesOnBoard();
+            this.state.gameStarted ? 
+            setTimeout(
+                function(){
+                    this.checkMatchesOnBoard();
+                }
+                .bind(this),
+                1000)
+            : this.checkMatchesOnBoard()
         })
     }
 
     render() {
         return (
             <div style={containerStyle} className="container">
+                <div className="row">
+                    <div className="col-12 text-center">
+                        <h1>Score: {this.state.score}</h1>
+                    </div>
+                </div>
                 <div className="row">
                     {this.state.gameStarted ? this.renderBoard() : <h1>Game Loading</h1> }    
                 </div>
