@@ -21,6 +21,10 @@ class Tile extends Component{
         }
     }
 
+    componentWillUnmount(){
+        console.log("Unmounting");
+    }
+
     updateIcon = () => {
         let iconClass = "fas "
         switch (this.state.color){
@@ -49,12 +53,12 @@ class Tile extends Component{
                     config={{ mass: 0.1, tension: 280, friction: 10, clamp: true, precision: 10 }}
                     from={{ opacity: 0, position: "relative", top: -10 }}
                     enter={{ opacity: 1, top: 10 }}
-                    leave={{ opacity: 0, height: 100 }}
+                    leave={{ opacity: 0 }}
                     >
                     {item => props => (
                         <animated.div
                             style={ props }
-                            children={ <i className={ this.updateIcon() } style={{ fontSize: "300%", color: item }}/> }
+                            children={ <i className={ this.updateIcon() } style={{ color: item }}/> }
                         />  
                     )}
                 </Transition>

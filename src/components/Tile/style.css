@@ -1,3 +1,19 @@
 .tile:hover {
     cursor: pointer;
 }
+
+i {
+    font-size: 400% !important;
+}
+
+@media screen and (max-width: 765px){
+    i {
+        font-size: 300% !important;
+    }
+}
+
+@media screen and (max-width: 500px){
+    i {
+        font-size: 150% !important;
+    }
+}
