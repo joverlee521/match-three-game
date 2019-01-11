@@ -1,5 +1,6 @@
-import React, { Component } from 'react'
+import React, { Component } from "react";
 import _ from "lodash";
+import { Spring } from "react-spring";
 import Tile from "../Tile";
 
 // Made container a flex-column to center the game board on the page
@@ -176,9 +177,23 @@ export default class GameBoard extends Component {
             }
         });
         // Set tile state to new tiles array and shift tiles down
-        this.setState({tile: tiles, score: score}, () => {
+
+        this.state.gameStarted ? 
+        setTimeout(
+            function(){
+                this.setState({tile: tiles, score: score}, () =>{
+                    this.shiftTilesDown();
+                })
+            }
+            .bind(this),
+            300)
+        : this.setState({tile: tiles, score: score}, () =>{
             this.shiftTilesDown();
-        });
+        })
+
+        // this.setState({tile: tiles, score: score}, () => {
+        //     this.shiftTilesDown();
+        // });
     }
 
     // Function to shift exisiting tiles down to fill in empty spaces below it
@@ -210,7 +225,7 @@ export default class GameBoard extends Component {
                 this.fillInEmptyTiles(tiles)
             }
             .bind(this),
-            1000)
+            500)
         : this.fillInEmptyTiles(tiles)
     }
 
@@ -233,22 +248,34 @@ export default class GameBoard extends Component {
                     this.checkMatchesOnBoard();
                 }
                 .bind(this),
-                1000)
+                500)
             : this.checkMatchesOnBoard()
         })
     }
 
     render() {
         return (
+            this.state.gameStarted ? 
             <div style={containerStyle} className="container">
-                <div className="row">
-                    <div className="col-12 text-center">
-                        <h1>Score: {this.state.score}</h1>
+                <Spring from={{ opacity: 0, marginTop: -3000, marginBottom: 20 }} to={{ opacity: 1, marginTop: 0 }} delay="1000">
+                    {props => (
+                        <div className="row" style={ props }>
+                        <div className="col-12 text-center">
+                            <h1>Score: {this.state.score}</h1>
+                        </div>
+                    </div>
+                    )}
+                    
+                </Spring>
+                <div className="container w-75 h-50 px-5">
+                    <div className="row h-100">
+                        { this.renderBoard() }   
                     </div>
                 </div>
-                <div className="row">
-                    {this.state.gameStarted ? this.renderBoard() : <h1>Game Loading</h1> }    
-                </div>
+            </div>
+            :
+            <div>
+                <h1 className="text-center">Game Loading</h1>
             </div>
         )
     }
