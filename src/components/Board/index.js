@@ -14,6 +14,8 @@ const containerStyle = {
 // Current colors used in the game
 const colors = ["red", "green", "blue", "magenta"];
 
+const petColor = "red";
+
 export default class GameBoard extends Component {
     state = {
         gameStarted: false,
@@ -163,17 +165,23 @@ export default class GameBoard extends Component {
         }
     }
 
-    // Function to delete tiles that takes in an array of tile objects
+    // Function to delete tiles that takes in an array of tile keys that represents the x and y coordinates of tile
     deleteTiles = (tilesToDelete) => {
-        let score = this.state.score;
-        console.log(score);
         const tiles = this.state.tile;
+        let score = this.state.score;
         tilesToDelete.forEach(tile => {
+            // Store the color that is being deleted for future use 
+            const deletedColor = tiles[tile[0]][tile[1]].color;
+            // Set the color to nothing
             tiles[tile[0]][tile[1]].color = "";
-            console.log("deleted one tile");
             // Only increase the score if the game has started
             if(this.state.gameStarted){
-                score++;
+                if(deletedColor === petColor){
+                    score+=2;
+                }
+                else{
+                    score++;
+                }
             }
         });
         // Set tile state to new tiles array and shift tiles down
@@ -187,13 +195,10 @@ export default class GameBoard extends Component {
             }
             .bind(this),
             300)
-        : this.setState({tile: tiles, score: score}, () =>{
+        : 
+        this.setState({tile: tiles, score: score}, () =>{
             this.shiftTilesDown();
-        })
-
-        // this.setState({tile: tiles, score: score}, () => {
-        //     this.shiftTilesDown();
-        // });
+        });
     }
 
     // Function to shift exisiting tiles down to fill in empty spaces below it
